@@ -1,0 +1,156 @@
+---
+title: "RNAseq protocol"
+author: "Javier F. Tabima"
+date: "March 3, 2015"
+output:
+  html_document:
+    highlight: pygments
+    number_sections: yes
+    theme: cerulean
+    toc: yes
+---
+***
+
+> **READ ME FIRST!!!**: This document is for guidance only based on my *P. infestans* dataset. Please read carefully all the steps in order to change the input files. Each section has a **Script** with the script hyperlinked. The scripts do not have comments in order to make them easily modifiable but they are througly documented here!
+
+***
+
+# Creating the original Database
+
+>Program: **R**
+
+```R
+# Creating the sri data frame with all the info of the SraRunInfo.csv
+sri = read.csv("SraRunInfo.csv", stringsAsFactors=FALSE)
+
+#Saving the database in a new file
+save(sri,file="sri.RData")
+
+q()
+```
+
+***
+
+# Obtaining the SRA files
+
+>Program: **bash**
+
+>Script: `Get_Data_ftp.sh`
+
+We are splitting the rows of the `SraRunInfo.csv` file and obtaining the row that has the `download_path` column (Might vary in different files)
+
+```bash
+for i in $(cut -f 9 -d "," SraRunInfo.csv); do qsub Get_Data_ftp.sh $i; done
+```
+
+***
+
+# Converting SRA to FASTA (SRAtoFASTQ.R)
+
+>Program: **R**
+
+>Script: `SRAtoFASTQ.R`
+
+```R
+# Loading the data set
+load("sri.RData")
+
+# Creating a vector of the names of the `.sra` files
+fs = basename(sri$download_path)
+
+# Starting a counter for the run names
+i = 1
+
+# Loop: For each SRA, paste the SGE_Batch command to run fastq-dump and run it. (Is a condition of SGE_Batch to create a run name, in this case, the variable `i` which is a number that starts in 1 and increases by 1 everytime there is a new SRA is pasted to a `fastq` prefix, so the run names will be equivalent to `fastq$i`
+
+for(f in fs) {
+cmd = paste0("SGE_Batch -c '/raid1/teaching/CGRB/rnaseq_rhodes_winter_2015/RLibs/fastq-dump --split-3 ", f,"' -r fastq",i)
+cat(cmd,"\n")
+system(cmd) # invoke command
+i = i + 1
+}
+```
+
+***
+
+#Parsing the Metadata
+
+>Program: **R**
+
+>Script: `Metadata_parser.R`
+
+By Parsing the metadata we mean we are creating a new file (called `samples.RData`) that we will use in most of the subsequent scripts
+
+```R
+# load sri object
+load("sri.RData")
+
+# Create the `samples` data frame
+samples = unique(sri[,c("LibraryName","LibraryLayout")])
+
+# Loop: Match the sample name with the FASTQ file per sample
+for(i in seq_len(nrow(samples))) {
+        rw = (sri$LibraryName==samples$LibraryName[i])
+        if(samples$LibraryLayout[i]=="PAIRED") {
+        samples$fastq1[i] = paste0(sri$Run[rw],"_1.fastq",collapse=",")
+        samples$fastq2[i] = paste0(sri$Run[rw],"_2.fastq",collapse=",")
+        } else {
+        samples$fastq1[i] = paste0(sri$Run[rw],".fastq",collapse=",")
+        samples$fastq2[i] = ""
+         }
+        }
+        
+# Add descriptive column names
+## Control:
+samples$condition = "CTL" 
+
+## Treatment (Anything that matches an identifier in the treatment samples. In my case, the `_Mef` identifier):
+samples$condition[grep("_Mef",samples$LibraryName)] = "MET" 
+
+## Create a short name: 
+samples$shortname = paste(substr(samples$condition,1,2),  substr(samples$LibraryLayout,1,2),  seq_len(nrow(samples)), sep=".")
+
+## Writing the new file
+save(samples,file="samples.RData")
+```
+
+***
+
+# Creating the bowtie index for the FASTA reference/transcriptome file
+
+>Program: **bowtie2**
+
+>Script: Run as indicated below
+
+**REMEMBER:** the `-f` option is a flag for your **FASTA reference/transcriptome**, be aware to change it. The `Pinf_ref` argument is the name of the resulting index. Also change!
+
+```bash
+bowtie2-build -f /home/bpp/tabimaj/Grunwald_Lab/web_data/pinf_broad/pinf_super_contigs.fa Pinf_ref
+```
+
+***
+
+# Aligning the reads to the reference using `tophat2`
+
+>Program: **R**
+
+>Script: Alignment.R
+
+Here we are creating a wrapper to align the FASTQ we saved in the `samples.RData` file to the reference using `Tophat 2`
+
+```R
+# Loading the samples file
+load("samples.RData")
+
+# Loading the annotations (GTF/GFF) file [If there is no annotations file, ignore this and remove both the `-G` option for `tophat` and the `", gf, "` from the script]
+gf = "/nfs0/Grunwald_Lab/home/tabimaj/RNAseq/phytophthora_infestans_t30-4_1_transcripts.gtf"
+
+# Loading the FASTA reference/transcriptome index file
+bowind = "Pinf_ref"
+
+# Creating the command to run tophat2 for all the samples per treatment
+cmd = with(samples, paste("SGE_Batch -c 'tophat -G", gf, "-p 5 -o", LibraryName, bowind, fastq1,"' -r ", LibraryName, "-P 5"))
+
+# Running the samples
+sapply(cmd, function(x) system(x))
+```
