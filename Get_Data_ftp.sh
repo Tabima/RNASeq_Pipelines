@@ -5,7 +5,7 @@
 #$ -l mem_free=10G
 #$ -o Wget_o
 #$ -e Wget_e
-#$ -q grungall1
+#$ -q all.q
 #$ -V
 # #$ -h
 wget $1

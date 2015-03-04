@@ -2,7 +2,10 @@
 > **READ ME FIRST!!!**: This document is for guidance only based on my *P. infestans* dataset. Please read carefully all the steps in order to change the input files. Each section has a **Script**, The scripts do not have comments in order to make them easily modifiable but they are througly documented here!
 
 ***
+# Flowchart of the steps
+![flowchart](Flowchart.png)
 
+***
 # Creating the original Database
 
 >Program: **R**
@@ -33,7 +36,7 @@ for i in $(cut -f 9 -d "," SraRunInfo.csv); do qsub Get_Data_ftp.sh $i; done
 
 ***
 
-# Converting SRA to FASTA (SRAtoFASTQ.R)
+# Converting SRA to FASTA
 
 >Program: **R**
 
@@ -120,7 +123,7 @@ bowtie2-build -f /home/bpp/tabimaj/Grunwald_Lab/web_data/pinf_broad/pinf_super_c
 
 # Aligning the reads to the reference using `tophat2`
 
->Program: **R**
+>Program: **R + tophat**
 
 >Script: `Alignment.R`
 
@@ -142,3 +145,63 @@ cmd = with(samples, paste("SGE_Batch -c 'tophat -G", gf, "-p 5 -o", LibraryName,
 # Running the samples
 sapply(cmd, function(x) system(x))
 ```
+
+***
+
+# Converting BAM files to SAM files
+
+>Program: **bash + samtools**
+
+>Script: `BAMtoSAM.R`
+
+>WARNING: I highly recommend that ALL FOLDERS THAT DO NOT HAVE THE `accepted_hits.bam` ARE ERASED or this parallel script will be worthless.
+
+```bash
+# This loops through ALL EXISTING DIRECTORIES looking for the accepted_hits.bam and doing the rest! Just Copy and Paste to bash (Remember to put the BAMtoSAM.sh file in your folder)
+
+for i in $(ls -d */| perl -pe 's/\n/ /g'| sed 's/\///g'); do qsub BAMtoSAM.sh $i; done
+```
+
+***
+
+# Obtaining the counts
+
+>Program: **R + htseq**
+
+>Script: `ReadCount.R`
+
+
+>WARNING: IN CASE YOU DON'T HAVE `htseq-count` DO THE FOLLOWING IN BASH (Not in R)
+
+```bash
+cd ~
+wget https://pypi.python.org/packages/source/H/HTSeq/HTSeq-0.6.1.tar.gz#md5=b7f4f38a9f4278b9b7f948d1efbc1f05
+tar -zxvf HTSeq-0.6.1.tar.gz
+cd HTSeq-0.6.1
+python setup.py install --user
+```
+
+You'll see at the end of the run that there is a line saying `Installing htseq-count script to /YOUR_FOLDER/.local/bin`, that's the location you'll use ahead (e.g. mine is `/home/bpp/tabimaj/.local/bin/htseq-count`)
+
+```R
+#load samples
+load("samples.RData")
+
+#Create a vector of output files for each count
+samples$countf  =  paste(samples$LibraryName, "count" , sep =  ".")
+
+#Load the Annotation
+gf  =  "/nfs0/Grunwald_Lab/home/tabimaj/RNAseq/phytophthora_infestans_t30-4_1_transcripts.gtf"
+
+#Command to run by the system (REPLACE THE htseq-count path HERE!!!)
+cmd  =  paste0( "/home/training/your_ws/.local/bin/htseq-count -s no -a 10 " , samples$LibraryName,"_sn.sam " , gf, " > " , samples$countf)
+
+#System call
+sapply(cmd, function(x) system(x))
+
+#Saving the new data set
+save(samples,file="samples.RData")
+# cmd
+```
+
+
