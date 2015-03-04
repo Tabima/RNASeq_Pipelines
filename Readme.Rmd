@@ -122,7 +122,7 @@ bowtie2-build -f /home/bpp/tabimaj/Grunwald_Lab/web_data/pinf_broad/pinf_super_c
 
 >Program: **R**
 
->Script: Alignment.R
+>Script: `Alignment.R`
 
 Here we are creating a wrapper to align the FASTQ we saved in the `samples.RData` file to the reference using `Tophat 2`
 
