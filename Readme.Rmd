@@ -1,5 +1,5 @@
 
-> **READ ME FIRST!!!**: This document is for guidance only based on my *P. infestans* dataset. Please read carefully all the steps in order to change the input files. Each section has a **Script**, The scripts do not have comments in order to make them easily modifiable but they are througly documented here!
+> **READ ME FIRST!!!**: This document is for guidance only based on my *P. infestans* dataset. Please read carefully all the steps in order to change the input files. Each section has a **Script** and the Script is included in this repository, feel free to download them as needed or cloning the repository in case you are an advanced `git` used. The scripts do not have comments in order to make them easily modifiable but they are througly documented here!
 
 ***
 # Flowchart of the steps
