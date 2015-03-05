@@ -1,0 +1,273 @@
+---
+title: "EdgeR Analysis"
+author: "Javier F. Tabima"
+date: "March 4, 2015"
+output: html_document
+---
+
+# Loading the datasets and libraries:
+
+```{r}
+setwd("data/")
+library(edgeR)
+load("samples.RData")
+#load("sri.RData")
+samples$shortname <- c("US24_1_C","US24_2_C","US23_2_C","US8_2_C","US24_1_M","US24_2_M","US23_2_M","US8_2_M")
+samples$suc <-c("SUC","SUC","SUC","RES","SUC","SUC","SUC","RES")
+```
+
+# The protocol:
+
+
+
+## Dataset 1: CTR vs MEF
+
+```{r}
+us8.v.all<- samples[c(5:8),]
+us8.v.all$condition <- c(rep("CTL",3),"MEF")
+us8.v.all$shortname <- c("CT.SI.5","CT.SI.6","CT.SI.7","Me.SI.8")
+save(us8.v.all,file = "us8.RData")
+```
+
+
+
+# Analysing differential expression on presence/absence of mefenoxam
+
+
+```{r}
+#1. Load the edgeR package and use the utility function, readDGE, to read in the COUNT files created from htseq-count:
+library("edgeR")
+counts=readDGE(samples$countf)$counts
+
+#2. Filter weakly expressed and noninformative (e.g., non-aligned) features using a command like:
+noint = rownames(counts) %in% c("no_feature","ambiguous","too_low_aQual","not_aligned","alignment_not_unique")
+cpms = cpm(counts)
+keep = rowSums(cpms >1) >=3 & !noint
+counts = counts[keep,]
+
+#3. Visualize and inspect the count table as follows:
+colnames(counts) = samples$shortname
+#head( counts[,order(samples$condition)], 5 )
+
+#4. Create a DGEList object (edgeR’s container for RNA-seq count data), as follows:
+d = DGEList(counts=counts, group=samples$condition)
+
+#5. Estimate normalization factors using
+d = calcNormFactors(d)
+
+#6. Inspect the relationships between samples using a multidimensional scaling (MDS) plot, as shown in Figure 4:
+png("MDS_step1_6.png")
+plotMDS(d, labels=samples$shortname,col = c("darkgreen","blue")[factor(samples$condition)])
+dev.off()
+
+#7. Estimate tagwise dispersion (simple design) using:
+d = estimateCommonDisp(d) 
+d = estimateTagwiseDisp(d)
+
+#8. Create a visual representation of the mean-variance relationship using the plotMeanVar (Fig. 5a) and plotBCV (Fig. 5b) functions, as follows:
+png("meanvar_dataset1.png")
+plotMeanVar(d, show.tagwise.vars=TRUE, NBline=TRUE)
+dev.off()
+
+png("BCV_dataset1.png")
+plotBCV(d)
+dev.off()
+
+#9. Test for differential expression (‘classic’ edgeR), as follows:
+de = exactTest(d, pair=c("CTL","MEF"))
+
+#10. Create a design matrix (see ‘Experimental design’ for further details) to specify the factors that are expected to affectexpression levels:
+design = model.matrix( ~ condition, samples)
+
+#11. Estimate dispersion values, relative to the design matrix, using the Cox-Reid (CR)-adjusted likelihood7,53, as follows:
+d2 = estimateGLMTrendedDisp(d, design) 
+d2 = estimateGLMTagwiseDisp(d2, design)
+
+#4. Given the design matrix and dispersion estimates, fit a GLM to each feature:
+f = glmFit(d2, design)
+
+#5. Perform a likelihood ratio test, specifying the difference of interest (here, knockdown versus control, which corresponds to the third column of the above design matrix):
+de = glmLRT(f, coef=2)
+
+#6. Use the topTags function to present a tabular summary of the differential expression statistics (note that topTags operates on the output of exactTest or glmLRT, but only the latter is shown here):
+tt = topTags(de, n=nrow(d)) 
+
+
+#7. Inspect the depth-adjusted reads per million for some of the top differentially expressed genes:
+nc = cpm(d, normalized.lib.sizes=TRUE)
+rn = rownames(tt$table)
+head(nc[rn,order(samples$condition)],5)
+
+#8. Create a graphical summary, such as an M (log-fold change) versus A (log-average expression) plot54, here showing the genes selected as differentially expressed (with a 5% false discovery rate; Fig. 6):
+deg = rn[tt$table$FDR < .01]
+png("Dispersal_dataset1.png")
+plotSmear(d, de.tags=deg)
+dev.off()
+
+#. Differentially expressed genes
+## Total genes:
+tt.de <- tt[rownames(tt) %in% deg,]
+tt.sig <- tt.de[tt.de$table$FDR < .01,]
+tt.ord <- tt.sig[order(tt.sig$table$logFC,decreasing = T),]
+write.table(tt.ord,file = "DifExt_Dataset1.txt",sep = "\t")
+nc.de <- nc[rownames(nc) %in% rownames(tt.ord),]
+write.table(nc.de,file = "SampleDifExt_Dataset1.txt",sep = "\t")
+```
+
+
+# Dataset 2: US8 against the world 
+
+```{r}
+samples.2 <- samples[samples$condition == "MEF",]
+
+#1. Load the edgeR package and use the utility function, readDGE, to read in the COUNT files created from htseq-count:
+library("edgeR")
+counts=readDGE(samples.2$countf)$counts
+
+#2. Filter weakly expressed and noninformative (e.g., non-aligned) features using a command like:
+noint = rownames(counts) %in% c("no_feature","ambiguous","too_low_aQual","not_aligned","alignment_not_unique")
+cpms = cpm(counts)
+keep = rowSums(cpms >1) >=3 & !noint
+counts = counts[keep,]
+
+#3. Visualize and inspect the count table as follows:
+colnames(counts) = samples.2$shortname
+#head( counts[,order(samples$condition)], 5 )
+
+#4. Create a DGEList object (edgeR’s container for RNA-seq count data), as follows:
+d = DGEList(counts=counts, group=samples.2$suc)
+
+#5. Estimate normalization factors using
+d = calcNormFactors(d)
+
+#6. Inspect the relationships between samples using a multidimensional scaling (MDS) plot, as shown in Figure 4:
+png("MDS_dataset2.png")
+plotMDS(d, labels=samples.2$shortname,col = c("darkgreen","blue")[factor(samples.2$suc)])
+dev.off()
+
+#7. Estimate tagwise dispersion (simple design) using:
+d = estimateCommonDisp(d) 
+d = estimateTagwiseDisp(d)
+
+#8. Create a visual representation of the mean-variance relationship using the plotMeanVar (Fig. 5a) and plotBCV (Fig. 5b) functions, as follows:
+png("meanvar_dataset2.png")
+plotMeanVar(d, show.tagwise.vars=TRUE, NBline=TRUE)
+dev.off()
+
+png("BCV_dataset2.png")
+plotBCV(d)
+dev.off()
+
+#9. Test for differential expression (‘classic’ edgeR), as follows:
+de = exactTest(d, pair=c("RES","SUC"))
+
+#10. Create a design matrix (see ‘Experimental design’ for further details) to specify the factors that are expected to affectexpression levels:
+design = model.matrix( ~ suc, samples.2)
+
+#11. Estimate dispersion values, relative to the design matrix, using the Cox-Reid (CR)-adjusted likelihood7,53, as follows:
+d2 = estimateGLMTrendedDisp(d, design) 
+d2 = estimateGLMTagwiseDisp(d2, design)
+
+#4. Given the design matrix and dispersion estimates, fit a GLM to each feature:
+f = glmFit(d2, design)
+
+#5. Perform a likelihood ratio test, specifying the difference of interest (here, knockdown versus control, which corresponds to the third column of the above design matrix):
+de = glmLRT(f, coef=2)
+
+#6. Use the topTags function to present a tabular summary of the differential expression statistics (note that topTags operates on the output of exactTest or glmLRT, but only the latter is shown here):
+tt = topTags(de, n=nrow(d)) 
+
+
+#7. Inspect the depth-adjusted reads per million for some of the top differentially expressed genes:
+nc = cpm(d, normalized.lib.sizes=TRUE)
+rn = rownames(tt$table)
+head(nc[rn,order(samples.2$suc)],5)
+
+#8. Create a graphical summary, such as an M (log-fold change) versus A (log-average expression) plot54, here showing the genes selected as differentially expressed (with a 5% false discovery rate; Fig. 6):
+deg = rn[tt$table$FDR < .01]
+png("Dispersal_dataset2.png")
+plotSmear(d, de.tags=deg)
+dev.off()
+
+#. Differentially expressed genes
+## Total genes:
+tt.de <- tt[rownames(tt) %in% deg,]
+tt.sig <- tt.de[tt.de$table$FDR < .01,]
+tt.ord <- tt.sig[order(tt.sig$table$logFC,decreasing = T),]
+
+nc.de <- nc[rownames(nc) %in% rownames(tt.ord),]
+
+write.table(tt.ord,file = "DifExt_Dataset2.txt",sep = "\t")
+write.table(nc.de,file = "SampleDifExt_Dataset2.txt",sep = "\t")
+```
+
+# Dataset 3: Everything
+
+```{r}
+#1. Load the edgeR package and use the utility function, readDGE, to read in the COUNT files created from htseq-count:
+library("edgeR")
+counts=readDGE(samples$countf)$counts
+
+#2. Filter weakly expressed and noninformative (e.g., non-aligned) features using a command like:
+noint = rownames(counts) %in% c("no_feature","ambiguous","too_low_aQual","not_aligned","alignment_not_unique")
+cpms = cpm(counts)
+keep = rowSums(cpms >1) >=3 & !noint
+counts = counts[keep,]
+
+#3. Visualize and inspect the count table as follows:
+colnames(counts) = samples$shortname
+#head( counts[,order(samples$condition)], 5 )
+
+#4. Create a DGEList object (edgeR’s container for RNA-seq count data), as follows:
+d = DGEList(counts=counts, group=samples$condition)
+
+#5. Estimate normalization factors using
+d = calcNormFactors(d)
+
+#7. Estimate tagwise dispersion (simple design) using:
+d = estimateCommonDisp(d) 
+d = estimateTagwiseDisp(d)
+
+#9. Test for differential expression (‘classic’ edgeR), as follows:
+de = exactTest(d, pair=c("CTL","MEF"))
+
+#10. Create a design matrix (see ‘Experimental design’ for further details) to specify the factors that are expected to affectexpression levels:
+design = model.matrix( ~ condition + suc, samples)
+
+#11. Estimate dispersion values, relative to the design matrix, using the Cox-Reid (CR)-adjusted likelihood7,53, as follows:
+d2 = estimateGLMTrendedDisp(d, design) 
+d2 = estimateGLMTagwiseDisp(d2, design)
+
+#4. Given the design matrix and dispersion estimates, fit a GLM to each feature:
+f = glmFit(d2, design)
+
+#5. Perform a likelihood ratio test, specifying the difference of interest (here, knockdown versus control, which corresponds to the third column of the above design matrix):
+de = glmLRT(f, coef=3)
+
+#6. Use the topTags function to present a tabular summary of the differential expression statistics (note that topTags operates on the output of exactTest or glmLRT, but only the latter is shown here):
+tt = topTags(de, n=nrow(d)) 
+
+
+#7. Inspect the depth-adjusted reads per million for some of the top differentially expressed genes:
+nc = cpm(d, normalized.lib.sizes=TRUE)
+rn = rownames(tt$table)
+head(nc[rn,order(samples$condition)],5)
+
+#8. Create a graphical summary, such as an M (log-fold change) versus A (log-average expression) plot54, here showing the genes selected as differentially expressed (with a 5% false discovery rate; Fig. 6):
+deg = rn[tt$table$FDR < .01]
+png("Dispersal_dataset3.png")
+plotSmear(d, de.tags=deg)
+dev.off()
+
+#. Differentially expressed genes
+## Total genes:
+tt.de <- tt[rownames(tt) %in% deg,]
+tt.sig <- tt.de[tt.de$table$FDR < .01,]
+tt.ord <- tt.sig[order(tt.sig$table$logFC,decreasing = T),]
+
+nc.de <- nc[rownames(nc) %in% rownames(tt.ord),]
+
+write.table(tt.ord,file = "DifExt_Dataset3.txt",sep = "\t")
+write.table(nc.de,file = "SampleDifExt_Dataset3.txt",sep = "\t")
+```
+

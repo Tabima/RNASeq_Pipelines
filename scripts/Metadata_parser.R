@@ -18,7 +18,7 @@ for(i in seq_len(nrow(samples))) {
 samples$condition = "CTL" 
 
 ## Mefanoxam:
-samples$condition = c("NoMef","NoMef","NoMef","CTL","Mef","Mef","Mef","CTL")
+samples$condition[grep("_Mef",samples$LibraryName)] = "MEF" 
 
 ## Short_Convention
 samples$shortname = paste(substr(samples$condition,1,2),  substr(samples$LibraryLayout,1,2),  seq_len(nrow(samples)), sep=".")
