@@ -1,18 +1,61 @@
 
-> **READ ME FIRST!!!**: This document is for guidance only based on my *P. infestans* dataset. Please read carefully all the steps in order to change the input files. Each section has a **Script** and the Script is included in this repository inside the `script` folder, feel free to download them as needed or cloning the repository in case you are an advanced `git` used. The scripts do not have comments in order to make them easily modifiable but they are througly documented here!
+#**READ ME FIRST!!!**: 
+> This document is for guidance only based on my *P. infestans* dataset. Please read carefully all the steps in order to change the input files. Each section has a **Script** and the Script is included in this repository inside the `script` folder, feel free to download them as needed or cloning the repository in case you are an advanced `git` used. The scripts do not have comments in order to make them easily modifiable but they are througly documented here!
 
 ***
-# Flowchart of the steps
+## Flowchart of the steps
 ![flowchart](Flowchart.png)
 
 ***
-# Creating the original Database
+***
+
+
+# Creating the SraRunInfo.csv
+
+## If you have getting SRA files from the SRA archive, do the following:
+
+1. Go to `Display Settings`, and in `Items per page` select 50 (I don't think you have more than 50 samples) and press apply
+
+![fig1](Step1.png)
+
+2. Then go to `Send To`, select `file` and in format select `RunInfo`
+
+![fig1](Step1.png)
+
+## If are not getting the data from the SRA
+
+1. Open Excel or whatever spreadsheet program you like
+2. Create a header with the following elements:
+
+|LibraryName|LibraryLayout|download_path|
+|---|---|---|
+||||
+
+  * `LibraryName` contains the name combination of the sample + treatment you are using (in my case, Strain_Fungicide)
+  * `LibraryLayout` contains the info of the illumina reads. if pair ended used PAIRED, if single ended use SINGLE
+  * `download_path` contains the path of the FASTQ files you are using for each sample
+  
+3. Save it as a comma-delimited text with the name `SraRunInfo.csv`
+
+An example of my SRA table would be:
+
+```{r, echo=FALSE, results='asis'}
+library(knitr)
+load("data/sri.RData")
+kable(sri[,c("LibraryName","LibraryLayout","download_path" )])
+```
+
+
+***
+
+
+# Creating the `sri.RData` file
 
 >Program: **R**
 
 ```R
 # Creating the sri data frame with all the info of the SraRunInfo.csv
-sri = read.csv("SraRunInfo.csv", stringsAsFactors=FALSE)
+sri = read.csv("data/SraRunInfo.csv", stringsAsFactors=FALSE)
 
 #Saving the database in a new file
 save(sri,file="sri.RData")
@@ -22,21 +65,21 @@ q()
 
 ***
 
-# Obtaining the SRA files
+# Obtaining the SRA/FASTQ files
 
 >Program: **bash**
 
 >Script: `Get_Data_ftp.sh`
 
-We are splitting the rows of the `SraRunInfo.csv` file and obtaining the row that has the `download_path` column (Might vary in different files)
+We are splitting the rows of the `SraRunInfo.csv` file and obtaining the row that has the `download_path` column (Might vary in different files) to get the SRA or FASTQ files (depends on what you have on your `SraRunInfo.csv` table)
 
 ```bash
-for i in $(cut -f 9 -d "," SraRunInfo.csv); do qsub Get_Data_ftp.sh $i; done
+for i in $(cut -f 3 -d "," SraRunInfo.csv); do qsub Get_Data_ftp.sh $i; done
 ```
 
 ***
 
-# Converting SRA to FASTA
+# Converting SRA to FASTQ
 
 >Program: **R**
 
@@ -44,7 +87,7 @@ for i in $(cut -f 9 -d "," SraRunInfo.csv); do qsub Get_Data_ftp.sh $i; done
 
 ```R
 # Loading the data set
-load("sri.RData")
+load("data/sri.RData")
 
 # Creating a vector of the names of the `.sra` files
 fs = basename(sri$download_path)
@@ -102,7 +145,7 @@ samples$condition[grep("_Mef",samples$LibraryName)] = "MET"
 samples$shortname = paste(substr(samples$condition,1,2),  substr(samples$LibraryLayout,1,2),  seq_len(nrow(samples)), sep=".")
 
 ## Writing the new file
-save(samples,file="samples.RData")
+save(samples,file="data/samples.RData")
 ```
 
 ***
@@ -131,7 +174,7 @@ Here we are creating a wrapper to align the FASTQ we saved in the `samples.RData
 
 ```R
 # Loading the samples file
-load("samples.RData")
+load("data/samples.RData")
 
 # Loading the annotations (GTF/GFF) file [If there is no annotations file, ignore this and remove both the `-G` option for `tophat` and the `", gf, "` from the script]
 gf = "/nfs0/Grunwald_Lab/home/tabimaj/RNAseq/phytophthora_infestans_t30-4_1_transcripts.gtf"
