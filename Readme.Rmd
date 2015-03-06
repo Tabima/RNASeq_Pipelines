@@ -39,11 +39,21 @@
 
 An example of my SRA table would be:
 
-```{r, echo=FALSE, results='asis'}
-library(knitr)
-load("data/sri.RData")
-kable(sri[,c("LibraryName","LibraryLayout","download_path" )])
-```
+|LibraryName  |LibraryLayout |download_path                                                                                         |
+|:------------|:-------------|:-----------------------------------------------------------------------------------------------------|
+|US24_1_NoMef |SINGLE        |ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByRun/sra/SRR/SRR164/SRR1640225/SRR1640225.sra |
+|US24_1_NoMef |SINGLE        |ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByRun/sra/SRR/SRR164/SRR1640226/SRR1640226.sra |
+|US24_1_NoMef |SINGLE        |ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByRun/sra/SRR/SRR164/SRR1640227/SRR1640227.sra |
+|US24_2_NoMef |SINGLE        |ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByRun/sra/SRR/SRR164/SRR1640231/SRR1640231.sra |
+|US24_2_NoMef |SINGLE        |ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByRun/sra/SRR/SRR164/SRR1640239/SRR1640239.sra |
+|US24_2_NoMef |SINGLE        |ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByRun/sra/SRR/SRR164/SRR1640240/SRR1640240.sra |
+|US23_NoMef   |SINGLE        |ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByRun/sra/SRR/SRR164/SRR1640241/SRR1640241.sra |
+|US23_NoMef   |SINGLE        |ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByRun/sra/SRR/SRR164/SRR1640243/SRR1640243.sra |
+|US23_NoMef   |SINGLE        |ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByRun/sra/SRR/SRR164/SRR1640244/SRR1640244.sra |
+|US8_NoMef    |SINGLE        |ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByRun/sra/SRR/SRR164/SRR1640245/SRR1640245.sra |
+|US8_NoMef    |SINGLE        |ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByRun/sra/SRR/SRR164/SRR1640247/SRR1640247.sra |
+|US8_NoMef    |SINGLE        |ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByRun/sra/SRR/SRR164/SRR1640248/SRR1640248.sra |
+
 
 
 ***
