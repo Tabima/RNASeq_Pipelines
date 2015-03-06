@@ -8,7 +8,6 @@ output: html_document
 # Loading the datasets and libraries:
 
 ```{r}
-setwd("data/")
 library(edgeR)
 load("samples.RData")
 #load("sri.RData")
@@ -16,23 +15,17 @@ samples$shortname <- c("US24_1_C","US24_2_C","US23_2_C","US8_2_C","US24_1_M","US
 samples$suc <-c("SUC","SUC","SUC","RES","SUC","SUC","SUC","RES")
 ```
 
+***
+
 # The protocol:
+![design](Experiment_design.png)
 
+***
 
+## Dataset 1: Analysing differential expression on presence/absence of mefenoxam (CTR vs MEF)
 
-## Dataset 1: CTR vs MEF
-
-```{r}
-us8.v.all<- samples[c(5:8),]
-us8.v.all$condition <- c(rep("CTL",3),"MEF")
-us8.v.all$shortname <- c("CT.SI.5","CT.SI.6","CT.SI.7","Me.SI.8")
-save(us8.v.all,file = "us8.RData")
-```
-
-
-
-# Analysing differential expression on presence/absence of mefenoxam
-
+> Protocol
+![design](Experiment_design_1.png)
 
 ```{r}
 #1. Load the edgeR package and use the utility function, readDGE, to read in the COUNT files created from htseq-count:
@@ -114,10 +107,15 @@ nc.de <- nc[rownames(nc) %in% rownames(tt.ord),]
 write.table(nc.de,file = "SampleDifExt_Dataset1.txt",sep = "\t")
 ```
 
+***
 
-# Dataset 2: US8 against the world 
+# Dataset 2: Analysing differential expression of resistant vs. suceptible clonal lineages (SUC vs. RES)
+
+> The protocol
+![design_2](Experiment_design_2.png)
 
 ```{r}
+#Creating the new dataset of fungicide present subset
 samples.2 <- samples[samples$condition == "MEF",]
 
 #1. Load the edgeR package and use the utility function, readDGE, to read in the COUNT files created from htseq-count:
@@ -201,9 +199,47 @@ write.table(tt.ord,file = "DifExt_Dataset2.txt",sep = "\t")
 write.table(nc.de,file = "SampleDifExt_Dataset2.txt",sep = "\t")
 ```
 
-# Dataset 3: Everything
+***
+
+# Dataset 3: Analysing differential expression of fungicide presence in a resistant clonal lineages (CTL/RES vs. MEF/RES)
+
+> The protocol
+![design_3](Experiment_design_3.png)
+
+
+## Reorganizing the data:
+
+```bash
+mkdir US8
+grep US8 SraRunInfo.csv > US8/SraRunInfo.csv
+R
+```
+
+```R
+sri = read.csv("data/SraRunInfo.csv", stringsAsFactors=FALSE)
+sri$LibraryName <- paste0(sri$LibraryName,"_",seq(1,3))
+save(sri,file="sri.RData")
+q()
+```
+## Reorganizing the metadata
+
+```bash
+Rscript Metadata_parser.R
+R
+```
+
+```R
+load("samples.RData")
+samples$fastq1 <- paste0("/nfs0/Grunwald_Lab/home/tabimaj/RNAseq/",samples$fastq1)
+save(samples,file="samples.RData")
+```
+
 
 ```{r}
+#Creating the data set subset
+setwd("Design_3/")
+load("samples.RData")
+
 #1. Load the edgeR package and use the utility function, readDGE, to read in the COUNT files created from htseq-count:
 library("edgeR")
 counts=readDGE(samples$countf)$counts
@@ -228,11 +264,20 @@ d = calcNormFactors(d)
 d = estimateCommonDisp(d) 
 d = estimateTagwiseDisp(d)
 
+#8. Create a visual representation of the mean-variance relationship using the plotMeanVar (Fig. 5a) and plotBCV (Fig. 5b) functions, as follows:
+png("meanvar_dataset3.png")
+plotMeanVar(d, show.tagwise.vars=TRUE, NBline=TRUE)
+dev.off()
+
+png("BCV_dataset3.png")
+plotBCV(d)
+dev.off()
+
 #9. Test for differential expression (‘classic’ edgeR), as follows:
-de = exactTest(d, pair=c("CTL","MEF"))
+de = exactTest(d, pair=c("CTL","MET"))
 
 #10. Create a design matrix (see ‘Experimental design’ for further details) to specify the factors that are expected to affectexpression levels:
-design = model.matrix( ~ condition + suc, samples)
+design = model.matrix( ~ condition , samples)
 
 #11. Estimate dispersion values, relative to the design matrix, using the Cox-Reid (CR)-adjusted likelihood7,53, as follows:
 d2 = estimateGLMTrendedDisp(d, design) 
@@ -242,7 +287,7 @@ d2 = estimateGLMTagwiseDisp(d2, design)
 f = glmFit(d2, design)
 
 #5. Perform a likelihood ratio test, specifying the difference of interest (here, knockdown versus control, which corresponds to the third column of the above design matrix):
-de = glmLRT(f, coef=3)
+de = glmLRT(f, coef=2)
 
 #6. Use the topTags function to present a tabular summary of the differential expression statistics (note that topTags operates on the output of exactTest or glmLRT, but only the latter is shown here):
 tt = topTags(de, n=nrow(d)) 
