@@ -24,8 +24,8 @@
 
 ## If are not getting the data from the SRA
 
-1. Open Excel or whatever spreadsheet program you like
-2. Create a header with the following elements:
+* Open Excel or whatever spreadsheet program you like
+* Create a header with the following elements:
 
 |LibraryName|LibraryLayout|download_path|
 |---|---|---|
@@ -35,7 +35,7 @@
   * `LibraryLayout` contains the info of the illumina reads. if pair ended used PAIRED, if single ended use SINGLE
   * `download_path` contains the path of the FASTQ files you are using for each sample
   
-3. Save it as a comma-delimited text with the name `SraRunInfo.csv`
+* Save it as a comma-delimited text with the name `SraRunInfo.csv`
 
 An example of my SRA table would be:
 
