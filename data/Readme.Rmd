@@ -1,10 +1,8 @@
----
-title: "Fungicide resistance as a consequence of differential expression in Phytophtora
-  infestans"
-author: "Javier F. Tabima"
-date: "March 6, 2015"
-output: html_document
----
+
+# Fungicide resistance as a consequence of differential expression in Phytophtora infestans
+###Javier F. Tabima
+
+***
 
 # Introduction
 
