@@ -34,6 +34,8 @@ dev.off()
 
 
 #Dataset3
-data2 <- read.table("DifExt_Dataset2.txt",sep = "\t",header = T)]
+data3 <- read.table("DifExt_Dataset3.txt",sep = "\t",header = T)
+
+sp3 <- read.table("SampleDifExt_Dataset3.txt",sep = "\t",header = T)
 
 

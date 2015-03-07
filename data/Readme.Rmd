@@ -111,6 +111,18 @@ After normalization (Figure 4a), a total of 33 genes were differentially express
 
 After normalization (Figure 5a), a total of 58 genes were differentially expressed (Figure 5b & Figure 5c). Out of these 58 genes, 49 are up-regulated and 9 are down-regulated. 
 
+Of the up-regulated genes we can find the followin really interesting genes:
+
+|Gene       |    US24_1_M|  US24_2_M|   US23_2_M|     US8_2_M|Function                                                     |
+|:----------|-----------:|---------:|----------:|-----------:|:------------------------------------------------------------|
+|PITG_16043 |  29.2677232| 46.411051|  42.368717| 140.2812834|Phosphatidylinositol binding protein                         |
+|PITG_08491 |  10.3921626| 24.326503|  22.305151| 129.9632548|12-oxophytodienoate reductase, putative                      |
+|PITG_15980 |  37.5693342| 35.098197|  23.993258| 115.6622789|Glycoside hydrolase, putative                                |
+
+Apparently all these genes are interacting with the metalaxil (more info to follow)
+
+***
+
 ![Fig_5a](BCV_dataset2.png)
 
 **Figure 4a**. Mean-variance relationship for dataset1.
@@ -194,7 +206,41 @@ After normalization (Figure 5a), a total of 58 genes were differentially express
 **Figure 5d.** Downregulated genes in dataset 2.
 
 ![](sp2_us8_up.png)
+
 **Figure 5e. ** Upregulated genes in US8
+
 ## Resistant lineages: Control vs. fungicide exposure
 
-After normalization (Figure 3a), a total of XXX genes were differentially expressed (Figure 3b). 
+After normalization (Figure 3a), a total of 246 genes were differentially expressed, where 166 were up-regulated and 80 are down-regulated
+
+![Fig_4a](BCV_dataset3.png)
+
+**Figure 6a**. Mean-variance relationship for dataset1.
+
+![Fig_4b](Dispersal_dataset3.png)
+
+**Figure 6b**. Fold changes per gene. Differentially expressed genes are in red.
+
+***
+
+Since there are so many genes, we will only use the top 5 and bottom 5 genes.
+
+|           |    logFC|   logCPM|        LR|   PValue|       FDR|
+|:----------|--------:|--------:|---------:|--------:|---------:|
+|PITG_22020 | 11.77737| 3.347854|  19.00495| 1.30e-05| 0.0011886|
+|PITG_08705 | 11.70889| 3.293415| 105.72464| 0.00e+00| 0.0000000|
+|PITG_19631 | 10.71393| 2.298768|  61.31350| 0.00e+00| 0.0000000|
+|PITG_09714 | 10.66174| 2.238727|  15.76281| 7.18e-05| 0.0046103|
+|PITG_04800 | 10.62422| 2.204358|  16.63578| 4.53e-05| 0.0032005|
+|PITG_02860 | -4.456376| 4.410900|  22.00664| 2.7e-06| 0.0003489|
+|PITG_14237 | -4.490672| 5.146294| 127.74464| 0.0e+00| 0.0000000|
+|PITG_08621 | -4.550188| 3.980926|  30.72034| 0.0e+00| 0.0000085|
+|PITG_16913 | -4.639182| 3.267118|  30.02173| 0.0e+00| 0.0000111|
+|PITG_07424 | -6.514476| 4.238426|  24.58000| 7.0e-07| 0.0001179|
+
+There are genes not expressed in the control expressed on the mefenoxam treatment:
+
+|           |    logFC|   logCPM|        LR|   PValue|       FDR|
+|:----------|--------:|--------:|---------:|--------:|---------:|
+|PITG_04266|0|0|0|3.75107568708433|5.2424776006083|1.86088537438791|
+|PITG_15648|0|0|0|1.87553784354217|2.2467761145464|1.27323736142331|
