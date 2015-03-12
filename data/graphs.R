@@ -38,4 +38,9 @@ data3 <- read.table("DifExt_Dataset3.txt",sep = "\t",header = T)
 
 sp3 <- read.table("SampleDifExt_Dataset3.txt",sep = "\t",header = T)
 
+d1 <- melt(data.frame(rownames(data[rownames(data) == "PITG_04266" | rownames(data) == "PITG_15648", ]),data[rownames(data) == "PITG_04266" | rownames(data) == "PITG_15648", ]))
+colnames(d1) <- c("Gene","variable","value")
 
+png("up_data3.png",width = 800, height=800)
+ggplot(d1,aes(x=variable,y=value,fill=Gene)) + geom_histogram(stat="identity")+facet_grid(Gene~.)+ theme(strip.text.y = element_text(size=10, angle=90), legend.position="none") + ylab("logFC") + xlab("Lineage")
+dev.off()

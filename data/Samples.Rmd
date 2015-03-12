@@ -314,5 +314,6 @@ nc.de <- nc[rownames(nc) %in% rownames(tt.ord),]
 
 write.table(tt.ord,file = "DifExt_Dataset3.txt",sep = "\t")
 write.table(nc.de,file = "SampleDifExt_Dataset3.txt",sep = "\t")
+
 ```
 
